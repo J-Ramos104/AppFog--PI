@@ -10,6 +10,7 @@ import com.exemple.appfog.R
 import com.exemple.appfog.databinding.FragmentConfBinding
 import com.exemple.appfog.databinding.FragmentHistBinding
 import com.exemple.appfog.util.setBackAction
+import com.google.firebase.auth.FirebaseAuth
 
 
 class ConfFragment : Fragment() {
@@ -28,9 +29,20 @@ class ConfFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        // Forçar reload do usuário para garantir dados atualizados
+        FirebaseAuth.getInstance().currentUser?.reload()?.addOnCompleteListener {
+            val user = FirebaseAuth.getInstance().currentUser
 
+            val nome = user?.displayName ?: "Nome não disponível"
+            val email = user?.email ?: "Email não disponível"
+
+            binding.nomeUser.text = nome
+            binding.emailUser.text = email
+        }
         // Chamando a função de extensão
         binding.voltar.setBackAction(this)
+
+
 
         initConf()
     }

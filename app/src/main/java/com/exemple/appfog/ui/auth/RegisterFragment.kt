@@ -59,50 +59,62 @@ class RegisterFragment : Fragment() {
         when {
             usuario.isBlank() -> showBottomSheet(message = getString(R.string.usuario_empty))
             email.isBlank() -> showBottomSheet(message = getString(R.string.email_empty))
-            senha.length < 6 -> showBottomSheet(message = getString(R.string.password_short)) // NOVA VALIDAÇÃO
+            senha.length < 6 -> showBottomSheet(message = getString(R.string.password_short))
             senha.isBlank() -> showBottomSheet(message = getString(R.string.password_empty))
             confSenha.isBlank() -> showBottomSheet(message = getString(R.string.confirm_senha_empty))
             senha != confSenha -> showBottomSheet(message = getString(R.string.password_different))
             else -> {
-                // Todos os campos estão válidos, cadastrar no Firebase
+                // Todos os campos válidos, criar usuário no Firebase
                 auth.createUserWithEmailAndPassword(email, senha)
                     .addOnCompleteListener(requireActivity()) { task ->
                         if (task.isSuccessful) {
-                            Toast.makeText(
-                                requireContext(),
-                                "Usuário cadastrado com sucesso!",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            val user = FirebaseAuth.getInstance().currentUser
+                            val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                                .setDisplayName(usuario)
+                                .build()
 
-                            // Limpar campos
-                            binding.EDEmail.setText("")
-                            binding.EDSenha.setText("")
-                            binding.EDUsuario.setText("")
-                            binding.EDConfSenha.setText("")
+                            user?.updateProfile(profileUpdates)
+                                ?.addOnCompleteListener { updateTask ->
+                                    if (updateTask.isSuccessful) {
+                                        android.util.Log.d("Firebase", "Nome do usuário atualizado com sucesso.")
 
+                                        Toast.makeText(
+                                            requireContext(),
+                                            "Usuário cadastrado com sucesso!",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
 
+                                        // Limpar campos só após o update do perfil
+                                        binding.EDEmail.setText("")
+                                        binding.EDSenha.setText("")
+                                        binding.EDUsuario.setText("")
+                                        binding.EDConfSenha.setText("")
+                                    } else {
+                                        // Se falhar ao atualizar nome, mostra erro
+                                        showBottomSheet(message = "Erro ao atualizar nome do usuário.")
+                                    }
+                                }
+                        } else {
+                            // Caso falha no cadastro, trata erro aqui
+                            val exception = task.exception
+                            val mensagemErro = when (exception) {
+                                is FirebaseAuthWeakPasswordException ->
+                                    getString(R.string.password_short)
+                                is FirebaseAuthInvalidCredentialsException ->
+                                    "Digite um email válido."
+                                is FirebaseAuthUserCollisionException ->
+                                    getString(R.string.account_already_registered)
+                                is FirebaseNetworkException ->
+                                    "Sem conexão com a internet."
+                                else -> "Erro ao cadastrar usuário."
+                            }
+                            showBottomSheet(message = mensagemErro)
                         }
-
-                    }
-                    .addOnFailureListener { exception ->
-                        val mensagemErro = when (exception) {
-                            is FirebaseAuthWeakPasswordException ->
-                                getString(R.string.password_short)
-                            is FirebaseAuthInvalidCredentialsException ->
-                                "Digite um email válido."
-                            is FirebaseAuthUserCollisionException ->
-                                getString(R.string.account_already_registered)
-                            is FirebaseNetworkException ->
-                                "Sem conexão com a internet."
-                            else -> "Erro ao cadastrar usuário."
-                        }
-
-                        // Exibe a mensagem de erro
-                        showBottomSheet(message = mensagemErro)
                     }
             }
         }
     }
+
 
 
     override fun onDestroyView() {
