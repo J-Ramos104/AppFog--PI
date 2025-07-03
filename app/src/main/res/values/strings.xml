@@ -10,7 +10,10 @@
 
 
     <!-- Generics -->
+    <string name="password_short">A senha deve ter no mínimo 6 caracteres.</string>
+    <string name="account_already_registered">Esta conta já está cadastrada.</string>
     <string name="text_title_warning">Atenção</string>
+    <string name="password_different">As senhas não coincidem.</string>
     <string name="text_button_warning">Entendi</string>
     <string name="password_empty">Preencha a senha!</string>
     <string name="password_text">Senha</string>

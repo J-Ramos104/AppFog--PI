@@ -10,12 +10,20 @@ import com.exemple.appfog.R
 import com.exemple.appfog.databinding.FragmentRegisterBinding
 import com.exemple.appfog.util.setBackAction
 import com.exemple.appfog.util.showBottomSheet
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 
 
 class RegisterFragment : Fragment() {
 
     private var _binding: FragmentRegisterBinding? = null
     private val binding get() = _binding!!
+
+    private val auth = FirebaseAuth.getInstance()
+
 
 
 
@@ -41,34 +49,59 @@ class RegisterFragment : Fragment() {
         }
 
     }
-    private fun ValidaRegister(){
+    private fun ValidaRegister() {
         val email = binding.EDEmail.text.toString().trim()
         val senha = binding.EDSenha.text.toString().trim()
         val usuario = binding.EDUsuario.text.toString().trim()
-        val ConfSenha = binding.EDConfSenha.text.toString().trim()
+        val confSenha = binding.EDConfSenha.text.toString().trim()
+
+        // Validação básica dos campos
+        when {
+            usuario.isBlank() -> showBottomSheet(message = getString(R.string.usuario_empty))
+            email.isBlank() -> showBottomSheet(message = getString(R.string.email_empty))
+            senha.length < 6 -> showBottomSheet(message = getString(R.string.password_short)) // NOVA VALIDAÇÃO
+            senha.isBlank() -> showBottomSheet(message = getString(R.string.password_empty))
+            confSenha.isBlank() -> showBottomSheet(message = getString(R.string.confirm_senha_empty))
+            senha != confSenha -> showBottomSheet(message = getString(R.string.password_different))
+            else -> {
+                // Todos os campos estão válidos, cadastrar no Firebase
+                auth.createUserWithEmailAndPassword(email, senha)
+                    .addOnCompleteListener(requireActivity()) { task ->
+                        if (task.isSuccessful) {
+                            Toast.makeText(
+                                requireContext(),
+                                "Usuário cadastrado com sucesso!",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                            // Limpar campos
+                            binding.EDEmail.setText("")
+                            binding.EDSenha.setText("")
+                            binding.EDUsuario.setText("")
+                            binding.EDConfSenha.setText("")
 
 
+                        }
 
-        if (usuario.isNotBlank()) {
-            if (email.isNotBlank()) {
-                if (senha.isNotBlank()) {
-                    if (ConfSenha.isNotBlank()) {
-                        Toast.makeText(requireContext(), "Tudo OK!", Toast.LENGTH_SHORT).show()
-                    } else {
-                        showBottomSheet(message = getString(R.string.confirm_senha_empty))
                     }
-                } else {
-                    showBottomSheet(message = getString(R.string.password_empty))
-                }
-            } else {
-                showBottomSheet(message = getString(R.string.email_empty))
+                    .addOnFailureListener { exception ->
+                        val mensagemErro = when (exception) {
+                            is FirebaseAuthWeakPasswordException ->
+                                getString(R.string.password_short)
+                            is FirebaseAuthInvalidCredentialsException ->
+                                "Digite um email válido."
+                            is FirebaseAuthUserCollisionException ->
+                                getString(R.string.account_already_registered)
+                            is FirebaseNetworkException ->
+                                "Sem conexão com a internet."
+                            else -> "Erro ao cadastrar usuário."
+                        }
+
+                        // Exibe a mensagem de erro
+                        showBottomSheet(message = mensagemErro)
+                    }
             }
-        } else {
-            showBottomSheet(message = getString(R.string.usuario_empty))
         }
-
-
-
     }
 
 
