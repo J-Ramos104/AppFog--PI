@@ -70,7 +70,7 @@ class LoginFragment : Fragment() {
                         if (authentication.isSuccessful) {
                             findNavController().navigate(R.id.action_loginFragment2_to_homeFragment2)
                         } else {
-                            showBottomSheet(message = "Erro ao fazer login.")
+                            showBottomSheet(message = "Erro ao realizar login.")
                         }
                     }
                     .addOnFailureListener { exception ->
