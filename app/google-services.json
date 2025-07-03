@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "215835523245",
+    "project_id": "appfogpi",
+    "storage_bucket": "appfogpi.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:215835523245:android:474888d6ec7c011d5fae24",
+        "android_client_info": {
+          "package_name": "com.exemple.appfog"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCe9aR7vubTD335Ml9hScybbhvGMGvG84Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
