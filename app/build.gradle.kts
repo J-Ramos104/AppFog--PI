@@ -54,4 +54,6 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     implementation("com.google.firebase:firebase-auth")
+    implementation ("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
 }

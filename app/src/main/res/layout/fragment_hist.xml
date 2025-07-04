@@ -42,17 +42,34 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <View
+
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/box_bomba"
         android:layout_width="385dp"
         android:layout_height="180dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="72dp"
+        android:layout_marginTop="84dp"
         android:background="@drawable/quadro_borda"
         app:layout_constraintEnd_toStartOf="@+id/GUIA_direita"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/GUIA_superior" />
+        app:layout_constraintTop_toTopOf="@id/GUIA_superior">
+
+        <!-- Gráfico LineChart aqui -->
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/chartSmoke"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_margin="8dp"
+            android:minHeight="100dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="MissingClass" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/GUIA_superior"
@@ -61,21 +78,22 @@
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.12" />
 
+    <!-- Linha superior -->
+
+
     <TextView
         android:id="@+id/text_B"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="15dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="60dp"
         android:text="Casa Principal"
         android:textColor="@color/black"
-        android:textSize="20dp"
+        android:textSize="16dp"
         android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="@+id/GUIA_esquerda"
-        app:layout_constraintTop_toTopOf="@+id/box_bomba" />
-
-    <!-- Linha superior -->
-
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.077"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/view" />
 
     <View
         android:id="@+id/view"
@@ -98,10 +116,9 @@
         android:background="@drawable/quadro_borda"
         app:layout_constraintBottom_toTopOf="@+id/box_bombaH2O"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.483"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/box_bomba"
-        app:layout_constraintVertical_bias="0.102" />
+        app:layout_constraintVertical_bias="0.666" />
 
     <TextView
         android:id="@+id/text_semanas"
@@ -133,8 +150,8 @@
         android:id="@+id/text_historico"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="4dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp"
         android:text="Histórico Semanal"
         android:textColor="@color/black"
         android:textSize="30dp"
@@ -146,10 +163,10 @@
         android:id="@+id/box_bombaH2O"
         android:layout_width="385dp"
         android:layout_height="130dp"
-        android:layout_marginTop="324dp"
+        android:layout_marginTop="340dp"
         android:background="@drawable/quadro_borda"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.483"
+        app:layout_constraintHorizontal_bias="0.538"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/GUIA_superior" />
 
@@ -261,7 +278,7 @@
         android:layout_marginTop="12dp"
         android:background="@drawable/quadro_borda"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.483"
+        app:layout_constraintHorizontal_bias="0.461"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/box_bombaH2O" />
 
