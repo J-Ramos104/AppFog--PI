@@ -271,13 +271,12 @@
         android:id="@+id/textViewCurrentSensorValue"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="268dp"
-        android:layout_marginBottom="36dp"
+        android:layout_marginStart="72dp"
         android:text="Valor Atual:N/A"
-        android:textColor="@color/black"
         android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="@+id/view3"
-        app:layout_constraintStart_toStartOf="parent"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/textSensor"
+        app:layout_constraintStart_toEndOf="@+id/textSensor"
         tools:ignore="MissingConstraints" />
 
     <View
