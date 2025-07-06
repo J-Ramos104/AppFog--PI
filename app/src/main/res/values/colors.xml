@@ -7,4 +7,11 @@
     <color name="light_orange">#FF9E58</color>
     <color name="bege">#FFDEC7</color>
     <color name="gray">#B7B6B5</color>
+    <color name="blue">#2196F3</color>
+
+    <color name="green">#4CAF50</color>
+    <color name="red">#F44336</color>
+
+    <color name="green_light">#8BC34A</color>
+    <color name="red_light">#FFCDD2</color>
 </resources>

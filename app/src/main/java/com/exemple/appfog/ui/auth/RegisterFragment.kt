@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.navigation.fragment.findNavController
 import com.exemple.appfog.R
 import com.exemple.appfog.databinding.FragmentRegisterBinding
 import com.exemple.appfog.util.setBackAction
@@ -15,17 +16,17 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
-
+import com.google.firebase.database.FirebaseDatabase // Import para Firebase Realtime Database
+import android.util.Log
 
 class RegisterFragment : Fragment() {
 
     private var _binding: FragmentRegisterBinding? = null
     private val binding get() = _binding!!
 
+    // Instâncias do Firebase
     private val auth = FirebaseAuth.getInstance()
-
-
-
+    private lateinit var database: FirebaseDatabase // Instância do Firebase Realtime Database
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,22 +35,25 @@ class RegisterFragment : Fragment() {
         _binding = FragmentRegisterBinding.inflate(inflater, container, false)
         return binding.root
     }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         binding.BTVoltar.setBackAction(this)
 
+        // Inicializa a instância do Firebase Realtime Database
+        database = FirebaseDatabase.getInstance()
 
         initRegister()
     }
 
     private fun initRegister() {
         binding.BTRegister.setOnClickListener {
-            ValidaRegister()
+            validateRegisterData()
         }
-
     }
-    private fun ValidaRegister() {
+
+    private fun validateRegisterData() {
         val email = binding.EDEmail.text.toString().trim()
         val senha = binding.EDSenha.text.toString().trim()
         val usuario = binding.EDUsuario.text.toString().trim()
@@ -59,55 +63,92 @@ class RegisterFragment : Fragment() {
         when {
             usuario.isBlank() -> showBottomSheet(message = getString(R.string.usuario_empty))
             email.isBlank() -> showBottomSheet(message = getString(R.string.email_empty))
-            senha.length < 6 -> showBottomSheet(message = getString(R.string.password_short))
             senha.isBlank() -> showBottomSheet(message = getString(R.string.password_empty))
+            senha.length < 6 -> showBottomSheet(message = getString(R.string.password_short))
             confSenha.isBlank() -> showBottomSheet(message = getString(R.string.confirm_senha_empty))
             senha != confSenha -> showBottomSheet(message = getString(R.string.password_different))
             else -> {
-                // Todos os campos válidos, criar usuário no Firebase
+                // Todos os campos válidos, criar usuário no Firebase Authentication
                 auth.createUserWithEmailAndPassword(email, senha)
                     .addOnCompleteListener(requireActivity()) { task ->
                         if (task.isSuccessful) {
-                            val user = FirebaseAuth.getInstance().currentUser
-                            val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
-                                .setDisplayName(usuario)
-                                .build()
+                            // Sucesso na criação do usuário no Firebase Authentication
+                            val firebaseUser = auth.currentUser
+                            firebaseUser?.let { user ->
+                                val userId = user.uid
+                                Log.d("RegisterFragment", "Usuário do Auth criado: ${user.email}, UID: $userId")
 
-                            user?.updateProfile(profileUpdates)
-                                ?.addOnCompleteListener { updateTask ->
-                                    if (updateTask.isSuccessful) {
-                                        android.util.Log.d("Firebase", "Nome do usuário atualizado com sucesso.")
+                                // 1. Opcional: Atualizar o displayName no Firebase Authentication
+                                // Isso é útil para algumas ferramentas do Firebase, mas o Realtime Database será o local principal.
+                                val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                                    .setDisplayName(usuario)
+                                    .build()
+
+                                user.updateProfile(profileUpdates)
+                                    .addOnCompleteListener { updateProfileTask ->
+                                        if (updateProfileTask.isSuccessful) {
+                                            Log.d("RegisterFragment", "Nome de exibição atualizado no Auth.")
+                                        } else {
+                                            Log.w("RegisterFragment", "Falha ao atualizar nome de exibição no Auth: ${updateProfileTask.exception?.message}")
+                                            // Não mostramos erro grave aqui, pois a funcionalidade principal é salvar no DB
+                                        }
+                                    }
+
+                                // 2. *Implementação do Firebase Realtime Database:*
+                                // Salvar dados adicionais do usuário (como o nome) no nó 'usuarios' no Realtime Database
+                                val userData = hashMapOf(
+                                    "nome" to usuario,
+                                    "email" to email,
+                                    "dataCriacao" to System.currentTimeMillis() // Opcional: Adicionar timestamp de criação
+                                    // Adicione outros campos de perfil aqui se necessário (ex: "fotoPerfil" = "url_da_foto")
+                                )
+
+                                // Define um nó no Realtime Database em 'usuarios/{userId}' com os dados do usuário
+                                database.getReference("usuarios").child(userId).setValue(userData)
+                                    .addOnSuccessListener {
+                                        // Dados do usuário salvos com sucesso no Realtime Database
+                                        Log.d("RegisterFragment", "Dados do usuário salvos no Realtime Database para UID: $userId")
 
                                         Toast.makeText(
                                             requireContext(),
-                                            "Usuário cadastrado com sucesso!",
+                                            "Cadastro realizado com sucesso!",
                                             Toast.LENGTH_SHORT
                                         ).show()
 
-                                        // Limpar campos só após o update do perfil
+                                        // Limpar campos após o sucesso
                                         binding.EDEmail.setText("")
                                         binding.EDSenha.setText("")
                                         binding.EDUsuario.setText("")
                                         binding.EDConfSenha.setText("")
-                                    } else {
-                                        // Se falhar ao atualizar nome, mostra erro
-                                        showBottomSheet(message = "Erro ao atualizar nome do usuário.")
+
                                     }
-                                }
+                                    .addOnFailureListener { e ->
+                                        // Erro ao salvar dados no Realtime Database
+                                        Log.e("RegisterFragment", "Erro ao salvar dados no Realtime Database: ${e.message}", e)
+                                        showBottomSheet(message = "Erro ao finalizar cadastro. Tente novamente.")
+                                        // Opcional: Deslogar o usuário ou apagar a conta se a etapa do DB falhar criticamente
+                                    }
+
+                            } ?: run {
+                                // Se firebaseUser for nulo (cenário raro após isSuccessful)
+                                Log.e("RegisterFragment", "Usuário do Firebase é nulo após criação bem-sucedida.")
+                                showBottomSheet(message = "Erro interno ao processar cadastro.")
+                            }
                         } else {
-                            // Caso falha no cadastro, trata erro aqui
+                            // Caso falha na criação do usuário no Firebase Authentication
                             val exception = task.exception
                             val mensagemErro = when (exception) {
                                 is FirebaseAuthWeakPasswordException ->
                                     getString(R.string.password_short)
                                 is FirebaseAuthInvalidCredentialsException ->
-                                    "Digite um email válido."
+                                    "O formato do email é inválido ou o email já está em uso."
                                 is FirebaseAuthUserCollisionException ->
                                     getString(R.string.account_already_registered)
                                 is FirebaseNetworkException ->
-                                    "Sem conexão com a internet."
-                                else -> "Erro ao cadastrar usuário."
+                                    "Sem conexão com a internet. Verifique sua conexão."
+                                else -> "Erro desconhecido ao cadastrar usuário: ${exception?.message}"
                             }
+                            Log.e("RegisterFragment", "Falha na criação do usuário do Auth: $mensagemErro", exception)
                             showBottomSheet(message = mensagemErro)
                         }
                     }
@@ -115,11 +156,8 @@ class RegisterFragment : Fragment() {
         }
     }
 
-
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
-
 }
