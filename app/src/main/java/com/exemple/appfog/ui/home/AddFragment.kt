@@ -20,8 +20,8 @@ class AddFragment : Fragment() {
     private var _binding: FragmentAddBinding? = null
     private val binding get() = _binding!!
     // Instâncias do Firebase
-    private lateinit var auth: FirebaseAuth
-    private lateinit var database: FirebaseDatabase
+    private lateinit var auth: FirebaseAuth // Obtém a instância do Firebase Authentication
+    private lateinit var database: FirebaseDatabase // Obtém a instância do Firebase Realtime Database
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -70,7 +70,7 @@ class AddFragment : Fragment() {
     private fun saveHouseToRealtimeDatabase(nomeCasa: String, endereco: String, local: String, idSensor: String) {
         val currentUser = auth.currentUser
         if (currentUser != null) {
-            val userId = currentUser.uid
+            val userId = currentUser.uid // Obtém o UID do usuário logado
             Log.d("AddFragment", "Tentando salvar casa para o UID: $userId")
 
             // Cria um mapa com os dados da casa
@@ -79,38 +79,40 @@ class AddFragment : Fragment() {
                 "endereco" to endereco,
                 "local" to local,
                 "idSensor" to idSensor,
-                "dataRegistro" to System.currentTimeMillis(),
-                "fumacaDetectada" to false,
-                "nivelFumaca" to "Nenhum",
-                "bombaAtivada" to false,
+                "dataRegistro" to System.currentTimeMillis(), // Timestamp do registro
+                "fumacaDetectada" to false, // Status inicial da fumaça
+                "nivelFumaca" to "Nenhum",  // Nível inicial da fumaça
+                "bombaAtivada" to false,  // Status inicial da bomba
                 "buzzerStatus" to false // Initial status for buzzer control from app
             )
 
-            // Initialize sensorData node structure
+            // Inicializa a estrutura de dados para o sensor
             val sensorDataInitial = hashMapOf<String, Any>(
                 "current" to hashMapOf(
                     "value" to 0,
                     "timestamp" to System.currentTimeMillis()
                 ),
-                "mq2ReadingsDailyAverage" to hashMapOf<String, Any>() // Empty map, will be populated by ESP32
+                "mq2ReadingsDailyAverage" to hashMapOf<String, Any>() // // Mapa vazio para médias diárias
             )
-
+            //Inicializa a estrutura de dados para a bomba de água
             val pumpDataInitial = hashMapOf<String, Any>(
                 "estado" to "N/A",
                 "funcionamento" to "N/A"
             )
-
+            //Define a referência raiz no banco de dados para a casa do usuário
             val rootRef = database.getReference("casas").child(userId)
-
+            //Salva os dados principais da casa
             rootRef.setValue(houseData)
                 .addOnSuccessListener {
+                    //Se o primeiro salvamento for bem-sucedido, salva os dados iniciais do sensor
                     rootRef.child("sensorData").setValue(sensorDataInitial)
                         .addOnSuccessListener {
                             rootRef.child("bombaDeAgua").setValue(pumpDataInitial)
                                 .addOnSuccessListener {
+                                    //Todos os dados foram salvos com sucesso
                                     Log.d("AddFragment", "Casa e dados iniciais salvos com sucesso no Realtime Database para UID: $userId")
                                     Toast.makeText(requireContext(), "Casa cadastrada com sucesso!", Toast.LENGTH_SHORT).show()
-
+                                    // Limpa os campos de entrada
                                     binding.edit1.setText("")
                                     binding.edit2.setText("")
                                     binding.edit3.setText("")
@@ -119,16 +121,19 @@ class AddFragment : Fragment() {
                                     findNavController().navigate(R.id.action_addFragment_to_homeFragment22)
                                 }
                                 .addOnFailureListener { e ->
+                                    // Trata falha ao salvar dados da bomba
                                     Log.e("AddFragment", "Erro ao salvar dados iniciais da bomba: ${e.message}", e)
                                     showBottomSheet(message = "Erro ao cadastrar casa: ${e.message}")
                                 }
                         }
                         .addOnFailureListener { e ->
+                            // Trata falha ao salvar dados do sensor
                             Log.e("AddFragment", "Erro ao salvar dados iniciais do sensor: ${e.message}", e)
                             showBottomSheet(message = "Erro ao cadastrar casa: ${e.message}")
                         }
                 }
                 .addOnFailureListener { e ->
+                    // Trata falha ao salvar dados principais da casa
                     Log.e("AddFragment", "Erro ao salvar casa no Realtime Database: ${e.message}", e)
                     showBottomSheet(message = "Erro ao cadastrar casa: ${e.message}")
                 }

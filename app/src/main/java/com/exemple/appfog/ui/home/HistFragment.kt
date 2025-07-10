@@ -95,45 +95,45 @@ class HistFragment : Fragment() {
     }
 
     private fun initChart() {
-        val chartSmoke = binding.chartSmoke
+        val chartSmoke = binding.chartSmoke // Referência ao seu LineChart no layout XML
 
-        val entries = mutableListOf<Entry>()
+        val entries = mutableListOf<Entry>() // Lista vazia para os pontos de dados do gráfico
         val dataSet = LineDataSet(entries, "Nível de Fumaça (Média Diária)").apply {
-            color = Color.RED
-            valueTextColor = Color.BLACK
-            lineWidth = 2f
-            circleRadius = 4f
-            setDrawValues(true)
-            setDrawCircles(true)
+            color = Color.RED // Cor da linha do gráfico
+            valueTextColor = Color.BLACK // Cor do texto dos valores em cada ponto
+            lineWidth = 2f // Espessura da linha
+            circleRadius = 4f // Tamanho dos círculos nos pontos de dados
+            setDrawValues(true) // Desenha os valores numéricos em cada ponto
+            setDrawCircles(true) // Desenha os círculos nos pontos de dados
         }
 
-        val lineData = LineData(dataSet)
-        chartSmoke.data = lineData
+        val lineData = LineData(dataSet) // Agrupa o DataSet em um objeto LineData
+        chartSmoke.data = lineData // Define os dados iniciais do gráfico como vazios
 
         chartSmoke.apply {
-            setTouchEnabled(true)
-            setPinchZoom(true)
-            description.isEnabled = false
-            legend.isEnabled = true
+            setTouchEnabled(true) // Permite interação com o toque (zoom, scroll)
+            setPinchZoom(true) // Permite zoom com pinça
+            description.isEnabled = false // Remove a descrição do canto inferior direito
+            legend.isEnabled = true // Mostra a legenda (no caso, "Nível de Fumaça (Média Diária)
 
-            xAxis.apply {
-                setDrawGridLines(false)
-                position = com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM
-                granularity = 1f
-                valueFormatter = DateAxisValueFormatter()
-                setLabelCount(7, true)
+            xAxis.apply { // Configurações do eixo X (horizontal)
+                setDrawGridLines(false) // Não desenha linhas de grade verticais
+                position = com.github.mikephil.charting.components.XAxis.XAxisPosition.BOTTOM // Posição do eixo X na parte inferior
+                granularity = 1f // Garante que os rótulos do eixo X apareçam para cada ponto inteiro
+                valueFormatter = DateAxisValueFormatter() // Formata os rótulos do eixo X
+                setLabelCount(7, true) // Tenta mostrar 7 rótulos no eixo X (útil para os 7 dias)
             }
 
-            axisLeft.apply {
-                setDrawGridLines(true)
-                axisMinimum = 0f
+            axisLeft.apply { // Configurações do eixo Y esquerdo (vertical)
+                setDrawGridLines(true) // Desenha linhas de grade horizontais
+                axisMinimum = 0f // Valor mínimo do eixo Y é 0
             }
-            axisRight.isEnabled = false
+            axisRight.isEnabled = false // Desabilita o eixo Y direito, usando apenas o esquerdo
 
-            animateX(1000)
+            animateX(1000) // Anima o gráfico ao carregá-lo (animação de 1 segundo no eixo X)
         }
 
-        chartSmoke.invalidate()
+        chartSmoke.invalidate() // Redesenha o gráfico para aplicar as configurações
     }
 
     // Função centralizada para carregar todos os dados do Firebase
@@ -164,10 +164,12 @@ class HistFragment : Fragment() {
     }
 
     private fun loadSensorHistory(userId: String) {
+        //Define a referência para o histórico de leituras diárias do sensor
         databaseRefSensor = database.getReference("casas").child(userId)
             .child("sensorData")
-            .child("mq2ReadingsDailyAverage")
+            .child("mq2ReadingsDailyAverage") // Acessa o nó de médias diárias do sensor MQ2
 
+        //Cria e anexa o ValueEventListener
         sensorDataListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val entries = mutableListOf<Entry>()
@@ -177,8 +179,8 @@ class HistFragment : Fragment() {
                 if (snapshot.exists()) {
                     Log.d("HistFragment", "Dados de histórico do sensor recebidos: ${snapshot.value}")
 
-                    val sortedData = snapshot.children.sortedBy { it.key }
-                    val last7Days = sortedData.takeLast(7)
+                    val sortedData = snapshot.children.sortedBy { it.key } // Ordena os dados pela chave (data)
+                    val last7Days = sortedData.takeLast(7) // Pega apenas os últimos 7 dias
 
                     if (last7Days.isEmpty()) {
                         binding.chartSmoke.setNoDataText("Nenhum dado de fumaça recente encontrado.")
@@ -188,8 +190,8 @@ class HistFragment : Fragment() {
                         last7Days.forEach { dailySnapshot ->
                             val dailyReading = dailySnapshot.getValue(DailySensorReading::class.java)
                             if (dailyReading != null) {
-                                entries.add(Entry(index, dailyReading.average))
-                                labels.add(dailySnapshot.key ?: "")
+                                entries.add(Entry(index, dailyReading.average)) // Adiciona a média ao gráfico
+                                labels.add(dailySnapshot.key ?: "") // Adiciona a chave (data) como label
                                 index++
                             }
                         }
@@ -209,7 +211,7 @@ class HistFragment : Fragment() {
                     }
 
                     val lineData = LineData(dataSet)
-
+                    // ... (configura e atualiza o gráfico)
                     binding.chartSmoke.data = lineData
                     binding.chartSmoke.xAxis.valueFormatter = DateAxisValueFormatter(labels)
                     binding.chartSmoke.xAxis.setLabelCount(labels.size, true)
@@ -242,7 +244,7 @@ class HistFragment : Fragment() {
 
         houseNameListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val houseName = snapshot.getValue(String::class.java)
+                val houseName = snapshot.getValue(String::class.java) // Pega o valor da string "nomeCasa"
                 if (houseName != null) {
                     binding.textViewHouseName.text = houseName
                     Log.d("HistFragment", "Nome da casa carregado: $houseName")

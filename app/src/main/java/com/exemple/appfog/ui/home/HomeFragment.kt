@@ -25,9 +25,9 @@ class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
     private lateinit var auth: FirebaseAuth
-    private lateinit var database: FirebaseDatabase
-    private var homeDataListener: ValueEventListener? = null
-    private var databaseRef: DatabaseReference? = null
+    private lateinit var database: FirebaseDatabase   //ponto de entrada para interagir com o Realtime Database.
+    private var homeDataListener: ValueEventListener? = null  //armazenar e verifica as mudanças nos dados do Firebase Realtime Database
+    private var databaseRef: DatabaseReference? = null // armazena a referência ao local específico no banco de dados que o fragmento (configurou um canal de comunicação com o Firebase Realtime Database).
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -71,16 +71,17 @@ class HomeFragment : Fragment() {
             Toast.makeText(requireContext(), "Funcionalidade de Deletar Casa (Implementar)", Toast.LENGTH_SHORT).show()
         }
     }
-
+    //Carregamento de Dados da Casa (loadHomeData())
     private fun loadHomeData() {
-        val currentUser = auth.currentUser
+        val currentUser = auth.currentUser //Obtém o UID do usuário logado
         if (currentUser != null) {
             val userId = currentUser.uid
             Log.d("HomeFragment", "Configurando listener para dados da casa do UID: $userId")
-
+            // Define a referência do banco de dados para a casa do usuário(indica o caminho para os dados que queremos acessar)
             databaseRef = database.getReference("casas").child(userId)
 
-            homeDataListener = object : ValueEventListener {
+            // Cria e anexa o ValueEventListener
+            homeDataListener = object : ValueEventListener { //acionado para notificar o app sobre as mudanças nos dados ou para fornecer os dados iniciais.
                 override fun onDataChange(snapshot: DataSnapshot) {
                     if (snapshot.exists()) {
                         Log.d("HomeFragment", "Dados da casa recebidos do Realtime Database: ${snapshot.value}")
@@ -97,7 +98,7 @@ class HomeFragment : Fragment() {
 
                         // Logic for "Presença de Fumaça"
                         if (fumacaDetectada) {
-                            binding.textViewStatusFumaca.text = "Fumaça Detectada"
+                            binding.textViewStatusFumaca.text = "Detectada"
                             binding.textViewStatusFumaca.setBackgroundResource(R.drawable.rounded_background_red)
                         } else {
                             binding.textViewStatusFumaca.text = "Sem Fumaça"
